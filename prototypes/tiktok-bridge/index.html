@@ -3,70 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Shop Label Bridge</title>
+    <title>TikTok Shop Label Bridge — A4 PDF to 4x6 Thermal</title>
+    <meta name="description" content="Instantly transform TikTok Shop A4 shipping labels into 4x6 thermal printer format. Free, private, runs in your browser.">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script defer data-domain="tiktok-label-bridge.netlify.app" src="https://plausible.io/js/script.js"></script>
     <style>
-        body { background-color: #f8fafc; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .bento-card { background: white; border-radius: 1.5rem; padding: 2rem; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .drop-active { border-color: #2563eb !important; background-color: #eff6ff !important; }
+        .result-card { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .processing { animation: pulse 1.5s ease-in-out infinite; }
     </style>
 </head>
-<body>
-    <div class="min-h-screen">
-        <main class="max-w-4xl mx-auto px-6 py-24 space-y-20">
-            
-            <!-- Hero -->
-            <section class="text-center space-y-8">
-                <h1 class="text-6xl font-black tracking-tight text-slate-900 leading-tight">
-                    TikTok Shop PDF <br/><span class="text-blue-600">→ 4x6 Thermal</span>
-                </h1>
-                <p class="text-2xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-                    Stop fighting with A4 labels. Transform your TikTok Shop PDFs into perfect 4x6 thermal labels in one click.
-                </p>
-            </section>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
 
-            <!-- Drop Zone -->
-            <section>
-                <div class="border-4 border-dashed border-slate-200 bg-white rounded-[2.5rem] hover:border-blue-500 hover:bg-blue-50/30 transition-all cursor-pointer group shadow-xl shadow-slate-200/50">
-                    <div class="flex flex-col items-center justify-center py-24 space-y-8">
-                        <div class="p-8 bg-blue-50 rounded-full group-hover:scale-110 transition-transform">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                        </div>
-                        <div class="text-center">
-                            <p class="text-3xl font-extrabold text-slate-800">Drop your TikTok PDF here</p>
-                            <p class="text-xl text-slate-400 mt-2">or click to browse your files</p>
-                        </div>
-                        <button class="bg-blue-600 text-white font-bold py-5 px-12 rounded-2xl text-xl hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-blue-500/40">
-                            Transform My Label
-                        </button>
+    <main class="max-w-3xl mx-auto px-6 py-16 space-y-16">
+
+        <!-- Hero -->
+        <section class="text-center space-y-6">
+            <h1 class="text-5xl sm:text-6xl font-black tracking-tight leading-tight">
+                TikTok Shop PDF<br><span class="text-blue-600">&rarr; 4&times;6 Thermal</span>
+            </h1>
+            <p class="text-xl text-slate-500 max-w-xl mx-auto leading-relaxed">
+                Drop your TikTok Shop shipping PDFs. Get perfect 4&times;6 thermal labels. Instant. Free. Everything stays in your browser.
+            </p>
+        </section>
+
+        <!-- Carrier Select -->
+        <section class="flex justify-center">
+            <div class="inline-flex items-center gap-3 bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm">
+                <label for="carrier" class="text-sm font-semibold text-slate-600">Carrier</label>
+                <select id="carrier" class="bg-transparent text-sm font-medium text-slate-800 focus:outline-none cursor-pointer">
+                    <option value="auto">Auto-detect</option>
+                    <option value="usps" selected>USPS (TikTok Shipping)</option>
+                    <option value="ups">UPS</option>
+                    <option value="fedex">FedEx</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Drop Zone -->
+        <section>
+            <div id="dropzone" class="border-[3px] border-dashed border-slate-200 bg-white rounded-3xl hover:border-blue-400 hover:bg-blue-50/20 transition-all cursor-pointer shadow-lg">
+                <div class="flex flex-col items-center justify-center py-20 space-y-6">
+                    <div class="p-6 bg-blue-50 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-slate-800">Drop your TikTok PDF here</p>
+                        <p class="text-base text-slate-400 mt-1">or click to browse &middot; supports multi-page PDFs</p>
                     </div>
                 </div>
-            </section>
+                <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple class="hidden">
+            </div>
+        </section>
 
-            <!-- Trust Features -->
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bento-card space-y-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <h3 class="font-black text-2xl text-slate-900">Privacy First</h3>
-                    <p class="text-lg text-slate-500 leading-relaxed">Processing happens in your browser. Labels never touch a server.</p>
-                </div>
-                <div class="bento-card space-y-5 border-blue-100 bg-blue-50/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-2 10h3l-2 10 7-12h-3l2-8z"/></svg>
-                    <h3 class="font-black text-2xl text-slate-900">Instant Crop</h3>
-                    <p class="text-lg text-slate-500 leading-relaxed">Auto-detects and rotates for thermal printers. No manual tools.</p>
-                </div>
-                <div class="bento-card space-y-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/><path d="M6 10h.01"/><path d="M10 10h.01"/></svg>
-                    <h3 class="font-black text-2xl text-slate-900">Batch Support</h3>
-                    <p class="text-lg text-slate-500 leading-relaxed">Drop 100 labels. Get 100 4x6 files in seconds. Free forever.</p>
-                </div>
-            </section>
+        <!-- Processing Indicator -->
+        <section id="processingSection" class="hidden text-center space-y-3">
+            <div class="processing inline-flex items-center gap-3 bg-blue-50 text-blue-700 font-semibold px-6 py-3 rounded-xl">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+                <span id="processingText">Transforming labels...</span>
+            </div>
+        </section>
 
-            <footer class="pt-16 text-center border-t border-slate-200/60">
-                <p class="text-sm text-slate-400 uppercase tracking-widest font-black">
-                    Built for the 2026 USPS Label Mandate
-                </p>
-            </footer>
-        </main>
-    </div>
+        <!-- Results -->
+        <section id="resultsSection" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold">Results</h2>
+                <div class="flex gap-3">
+                    <button id="downloadAllBtn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-500/30 hidden">
+                        Download All Labels
+                    </button>
+                    <button id="resetBtn" class="bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-xl hover:bg-slate-300 active:scale-95 transition-all">
+                        New Batch
+                    </button>
+                </div>
+            </div>
+            <div id="resultsList" class="space-y-3"></div>
+        </section>
+
+        <!-- Trust Features -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <h3 class="font-bold text-lg">Privacy First</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Your labels never leave your computer. All processing happens right here in your browser.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm space-y-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-2 10h3l-2 10 7-12h-3l2-8z"/></svg>
+                <h3 class="font-bold text-lg">Instant Transform</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Auto-crops and scales your A4/Letter labels to perfect 4&times;6 thermal format in milliseconds.</p>
+            </div>
+            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/><path d="M6 10h.01"/><path d="M10 10h.01"/></svg>
+                <h3 class="font-bold text-lg">Batch Ready</h3>
+                <p class="text-sm text-slate-500 leading-relaxed">Drop multi-page PDFs or multiple files. Every label gets its own 4&times;6 output.</p>
+            </div>
+        </section>
+
+        <footer class="pt-8 text-center border-t border-slate-200/60">
+            <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">
+                Built for the 2026 USPS TikTok Shipping Mandate
+            </p>
+        </footer>
+    </main>
+
+<script>
+// --- Analytics (Plausible custom events, no-op if script blocked) ---
+function track(event, props) {
+  if (window.plausible) window.plausible(event, { props });
+}
+
+// --- Carrier Profiles ---
+const CARRIER_PROFILES = {
+  usps: { left: 30, bottom: 420, right: 565, top: 800 },
+  ups:  { left: 30, bottom: 400, right: 565, top: 800 },
+  fedex:{ left: 30, bottom: 400, right: 565, top: 800 },
+};
+
+const THERMAL = { w: 288, h: 432 };
+
+function isA4OrLetter(w, h) {
+  return (w > 500 && h > 700) || (h > 500 && w > 700);
+}
+function isAlready4x6(w, h) {
+  return (w > 270 && w < 310 && h > 410 && h < 450) ||
+         (h > 270 && h < 310 && w > 410 && w < 450);
+}
+function autoCrop(pw, ph) {
+  const lw = 535, lh = 380;
+  return { left: (pw - lw) / 2, bottom: ph - lh - 40, right: (pw + lw) / 2, top: ph - 40 };
+}
+
+// --- DOM refs ---
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const carrierSel = document.getElementById('carrier');
+const processingSection = document.getElementById('processingSection');
+const processingText = document.getElementById('processingText');
+const resultsSection = document.getElementById('resultsSection');
+const resultsList = document.getElementById('resultsList');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+let allResults = [];
+
+// --- Drag & Drop ---
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drop-active'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drop-active'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('drop-active');
+  const files = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (files.length) processFiles(files);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) processFiles([...fileInput.files]);
+});
+
+// --- Core Processing ---
+async function processFiles(files) {
+  const { PDFDocument } = PDFLib;
+  const carrier = carrierSel.value;
+
+  processingSection.classList.remove('hidden');
+  resultsSection.classList.add('hidden');
+  resultsList.innerHTML = '';
+  allResults = [];
+
+  let labelNum = 0;
+  for (const file of files) {
+    processingText.textContent = `Processing ${file.name}...`;
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const srcDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const pageCount = srcDoc.getPageCount();
+
+      for (let i = 0; i < pageCount; i++) {
+        labelNum++;
+        const srcPage = srcDoc.getPage(i);
+        const { width, height } = srcPage.getSize();
+
+        if (isAlready4x6(width, height)) {
+          const pass = await PDFDocument.create();
+          const [cp] = await pass.copyPages(srcDoc, [i]);
+          pass.addPage(cp);
+          allResults.push({ name: `${file.name} — Page ${i+1}`, status: 'passthrough', msg: 'Already 4×6', bytes: await pass.save() });
+          continue;
+        }
+
+        if (!isA4OrLetter(width, height)) {
+          allResults.push({ name: `${file.name} — Page ${i+1}`, status: 'skipped', msg: `Unexpected size (${Math.round(width)}×${Math.round(height)} pts)`, bytes: null });
+          continue;
+        }
+
+        const crop = (carrier !== 'auto' && CARRIER_PROFILES[carrier])
+          ? CARRIER_PROFILES[carrier]
+          : autoCrop(width, height);
+
+        const clamped = {
+          left: Math.max(0, crop.left),
+          bottom: Math.max(0, crop.bottom),
+          right: Math.min(width, crop.right),
+          top: Math.min(height, crop.top)
+        };
+
+        const outDoc = await PDFDocument.create();
+        const embedded = await outDoc.embedPage(srcPage, clamped);
+        const outPage = outDoc.addPage([THERMAL.w, THERMAL.h]);
+
+        const scale = Math.min(THERMAL.w / embedded.width, THERMAL.h / embedded.height);
+        const dw = embedded.width * scale;
+        const dh = embedded.height * scale;
+        const dx = (THERMAL.w - dw) / 2;
+        const dy = (THERMAL.h - dh) / 2;
+
+        outPage.drawPage(embedded, { x: dx, y: dy, width: dw, height: dh });
+
+        allResults.push({ name: `${file.name} — Page ${i+1}`, status: 'transformed', msg: `${Math.round(width)}×${Math.round(height)} → 4×6`, bytes: await outDoc.save() });
+      }
+    } catch (err) {
+      allResults.push({ name: file.name, status: 'error', msg: err.message, bytes: null });
+    }
+  }
+
+  const transformed = allResults.filter(r => r.status === 'transformed').length;
+  const errors = allResults.filter(r => r.status === 'error' || r.status === 'skipped').length;
+  track('batch_complete', { labels: transformed, errors, carrier, files: files.length });
+
+  processingSection.classList.add('hidden');
+  renderResults();
+}
+
+// --- Render Results ---
+function renderResults() {
+  resultsList.innerHTML = '';
+  resultsSection.classList.remove('hidden');
+
+  const successCount = allResults.filter(r => r.bytes).length;
+  if (successCount > 1) downloadAllBtn.classList.remove('hidden');
+  else downloadAllBtn.classList.add('hidden');
+
+  for (const r of allResults) {
+    const card = document.createElement('div');
+    card.className = 'result-card flex items-center justify-between bg-white rounded-xl border px-5 py-4 shadow-sm';
+
+    const statusColors = {
+      transformed: 'bg-green-100 text-green-800',
+      passthrough: 'bg-blue-100 text-blue-800',
+      skipped: 'bg-yellow-100 text-yellow-800',
+      error: 'bg-red-100 text-red-800'
+    };
+
+    const left = document.createElement('div');
+    left.className = 'flex items-center gap-3';
+    left.innerHTML = `
+      <span class="text-xs font-bold px-2 py-1 rounded-lg ${statusColors[r.status]}">${r.status}</span>
+      <div>
+        <p class="font-semibold text-sm text-slate-800">${r.name}</p>
+        <p class="text-xs text-slate-400">${r.msg}</p>
+      </div>`;
+
+    card.appendChild(left);
+
+    if (r.bytes) {
+      const btn = document.createElement('button');
+      btn.className = 'text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors';
+      btn.textContent = 'Download';
+      btn.addEventListener('click', () => downloadOne(r));
+      card.appendChild(btn);
+    }
+
+    resultsList.appendChild(card);
+  }
+}
+
+// --- Download ---
+function downloadOne(r) {
+  track('download_single', { status: r.status });
+  const blob = new Blob([r.bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = r.name.replace(/[^a-zA-Z0-9_\-\.]/g, '_') + '_4x6.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+downloadAllBtn.addEventListener('click', async () => {
+  track('download_batch', { count: allResults.filter(r => r.bytes).length });
+  const { PDFDocument } = PDFLib;
+  const merged = await PDFDocument.create();
+  for (const r of allResults) {
+    if (!r.bytes) continue;
+    const doc = await PDFDocument.load(r.bytes);
+    const pages = await merged.copyPages(doc, doc.getPageIndices());
+    for (const p of pages) merged.addPage(p);
+  }
+  const blob = new Blob([await merged.save()], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tiktok_labels_4x6_batch.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+resetBtn.addEventListener('click', () => {
+  resultsSection.classList.add('hidden');
+  resultsList.innerHTML = '';
+  allResults = [];
+  fileInput.value = '';
+});
+</script>
+
 </body>
 </html>
