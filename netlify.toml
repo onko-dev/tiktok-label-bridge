@@ -1,0 +1,7 @@
+[build]
+  publish = "prototypes/tiktok-bridge/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
